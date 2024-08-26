@@ -80,4 +80,4 @@ Output_Turnover = Output_Turnover.merge(Output[["StoxxId", "InfoCode", "composit
                                         left_on=["Cutoff", "InfoCode"], right_on=["composition_date", "InfoCode"], 
                                         how="left").drop(columns={"composition_date"})
 
-Output_Turnover.to_csv(r"C:\Users\et246\Desktop\Turnover_CHECKS\QAD_Download\Turnover_Cutoff_1Q_SWALL.csv")
+Output_Turnover.to_csv(r"C:\Users\et246\Desktop\Turnover_CHECKS\QAD_Download\Turnover_Cutoff_3M_SWDEVALLCAP.csv")
