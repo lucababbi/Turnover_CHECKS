@@ -50,12 +50,12 @@ def last_business_day_of_previous_month(year, month):
     return last_day_date
 
 def create_review_cutoff_date_range(start_year, end_year):
-    """Create a DataFrame with Review and Cutoff dates for March and September."""
+    """Create a DataFrame with Review and Cutoff dates for June and December."""
     review_dates = []
     cutoff_dates = []
     
     for year in range(start_year, end_year + 1):
-        for month in [3, 9]:  # March and September
+        for month in [6, 12]:  # June and December
             review_date = first_monday_after_third_friday(year, month)
             cutoff_date = last_business_day_of_previous_month(year, month)
             
@@ -89,4 +89,4 @@ for Review in Securities_Date["Review"]:
         Final_Output = pl.concat([Final_Output, result])
 
 print(Final_Output)
-Final_Output.write_csv(r"C:\Users\lbabbi\OneDrive - ISS\Desktop\Projects\Turnover_CHECKS\SW\SW_AC_ALLCAP.csv")
+Final_Output.write_csv(r"C:\Users\lbabbi\OneDrive - ISS\Desktop\Projects\Turnover_CHECKS\SW\SW_AC_ALLCAP_JUNDEC.csv")
