@@ -13,7 +13,7 @@ from requests.auth import HTTPBasicAuth
 import glob
 from openpyxl import load_workbook
 
-dates_df = pd.read_csv(r"C:\Users\et246\Desktop\Turnover_CHECKS\Dates_Download.csv")
+dates_df = pd.read_csv(r"C:\Users\et246\Desktop\Turnover_CHECKS\SID_Download\Dates_Download.csv")
 dates_df["Review"] = pd.to_datetime(dates_df["Review"], format="%Y-%m-%d").dt.date
 dates_df["Cutoff"] = pd.to_datetime(dates_df["Cutoff"], format="%Y-%m-%d").dt.date
 
