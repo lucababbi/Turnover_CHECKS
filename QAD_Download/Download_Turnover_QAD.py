@@ -1,15 +1,15 @@
 from sqlite3 import Date
 import sys
-# sys.path.append(r"C:\Users\et246\Desktop\MSCI-EM-SC-New\STOXX")
+sys.path.append(r"C:\Users\et246\Desktop\Turnover_CHECKS\STOXX")
 import pandas as pd
 from datetime import datetime
 from pandasql import sqldf
-# from stoxx.qad.Turnover_Code import get_turnover_ratio
+from stoxx.qad.Turnover_Code import get_turnover_ratio
 
 Output_Turnover = pd.DataFrame()
 
-Output = pd.read_csv(r"C:\Users\lbabbi\OneDrive - ISS\Desktop\Projects\ESG\ESG_Project\Universe\SW_DEV_SC.csv", index_col=0, parse_dates=["Date"])
-InfoCode = pd.read_csv(r"C:\Users\lbabbi\OneDrive - ISS\Desktop\Projects\ESG\ESG_Project\Universe\InfoCode.csv", parse_dates=["vt", "vf"], index_col=0)
+Output = pd.read_csv(r"C:\Users\et246\Desktop\Turnover_CHECKS\QAD_Download\SW_AC_ALLCAP_JUNDEC.csv", index_col=0, parse_dates=["composition_date"])
+InfoCode = pd.read_csv(r"C:\Users\et246\Desktop\Turnover_CHECKS\QAD_Download\InfoCode.csv", parse_dates=["vt", "vf"], index_col=0)
 
 # Deal with 99991230 dates with a date in remote future
 InfoCode["vt"] = InfoCode["vt"].replace("99991230", "21001230")
@@ -19,24 +19,20 @@ InfoCode["vt"] = pd.to_datetime(InfoCode["vt"], format = "%Y%m%d")
 Output = sqldf("""
                 SELECT * FROM Output AS Input
                 LEFT JOIN InfoCode AS Info
-                ON Info.StoxxId = Input.Internal_Number
-                WHERE Input.Date >= Info.vf
-                AND Input.Date <= Info.vt                         
+                ON Info.StoxxId = Input.stoxxid
+                WHERE Input.composition_date >= Info.vf
+                AND Input.composition_date <= Info.vt                         
             """
-                    ).drop(columns={"InfoCodeSource", "SecCode", "SecCodeRegion", "SecCodeSource", "vf", "vt", "SecId","Sedol6", "Isin", "Ric"}).dropna(subset=["SEDOL", "InfoCode"])
+                    ).drop(columns={"InfoCodeSource", "SecCode", "SecCodeRegion", "SecCodeSource", "vf", "vt", "SecId", "Isin", "Ric", "sedol"}).dropna(subset=["InfoCode", "Sedol6"])
 
-Output.Date = pd.to_datetime(Output.Date)
+Output.composition_date = pd.to_datetime(Output.composition_date)
+Output.composition_date = Output.composition_date.dt.strftime("%Y-%m-%d")
+Output = Output.sort_values(by=("composition_date"))
 
 # Dates Frame
-Dates_Frame = pd.read_csv(r"C:\Users\et246\Desktop\MSCI-EM-SC-New\ESG_Project\Review_Date.csv", index_col=0, parse_dates=["Review", "Cutoff"], sep=";")
-
-for idx, Cutoff in enumerate(Dates_Frame["Cutoff"]):
-    if Cutoff.weekday() == 5:
-        Update_Cutoff = Cutoff - pd.DateOffset(days = 1)
-        Dates_Frame.loc[idx, "Cutoff"] = Update_Cutoff
-    elif Cutoff.weekday() == 6:
-        Update_Cutoff = Cutoff - pd.DateOffset(days = 2)
-        Dates_Frame.loc[idx, "Cutoff"] = Update_Cutoff
+Dates_Frame = pd.read_csv(r"C:\Users\et246\Desktop\Turnover_CHECKS\QAD_Download\Dates_Download.csv", sep=";")
+# Dates_Frame.Review = pd.to_datetime(Dates_Frame.Review)
+# Dates_Frame.Cutoff = pd.to_datetime(Dates_Frame.Cutoff)
 
 def last_business_day(date):
     # Convert date to pandas Timestamp
@@ -71,15 +67,17 @@ for date in Dates_Frame["Cutoff"]:
     enddate = pd.to_datetime(date)
     startdate = enddate - pd.DateOffset(months = 3)
 
-    # Check that startdate is not a Weekend
-    if startdate.weekday() == 5:
-        startdate = startdate - pd.DateOffset(days = 1)
-    elif startdate.weekday() == 6:
-        startdate = startdate - pd.DateOffset(days = 2)
-
-    temp_Output = Output.query("Date == @review")
-    AA = get_turnover_ratio(temp_Output["SEDOL"].tolist(), temp_Output["InfoCode"].tolist(), startdate, enddate, sedoldate = None)
-    AA["Date"] = review
+    temp_Output = Output.query("composition_date == @date").dropna(subset="Sedol6")
+    AA = get_turnover_ratio(temp_Output["Sedol6"].tolist(), temp_Output["InfoCode"].tolist(), startdate, enddate, sedoldate = None)
+    AA["Cutoff"] = date
     Output_Turnover = pd.concat([Output_Turnover, AA])
 
-Output_Turnover.to_csv(r"C:\Users\et246\Desktop\MSCI-EM-SC-New\ESG_Project\ToR\Turnover_Cutoff_1Q_SWALL.csv")
+    print(str(date) + " done!")
+
+Output_Turnover = Output_Turnover.rename(columns={"Turnover_Ratio": "Turnover_Ratio_3M"})
+
+Output_Turnover = Output_Turnover.merge(Output[["StoxxId", "InfoCode", "composition_date"]], 
+                                        left_on=["Cutoff", "InfoCode"], right_on=["composition_date", "InfoCode"], 
+                                        how="left").drop(columns={"composition_date"})
+
+Output_Turnover.to_csv(r"C:\Users\et246\Desktop\Turnover_CHECKS\QAD_Download\Turnover_Cutoff_1Q_SWALL.csv")
