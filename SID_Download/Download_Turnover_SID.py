@@ -49,25 +49,3 @@ for x in range(len(review_dates)):
 
 final_tor.to_csv(r"C:\Users\et246\Desktop\Turnover_CHECKS\Output\Turnover_SID.csv", index = False)
 print('Done.')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
